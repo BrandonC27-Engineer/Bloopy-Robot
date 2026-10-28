@@ -1,0 +1,507 @@
+@import "tailwindcss";
+
+/* Bloopy is a dark, cozy-futuristic app on every screen — the page canvas is
+   always deep space, so on desktop the centered app column floats on-brand
+   instead of on a white browser background. */
+:root {
+  --background: #00040a;
+  --foreground: #f4f8ff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* Touchscreen-friendly defaults for the Pi kiosk and phones. */
+a, button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Desktop only: a faint neon wash behind the centered column, so wide screens
+   feel intentional rather than a phone layout on a void. Purely decorative. */
+@media (min-width: 48rem) {
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(55% 45% at 50% 0%, rgba(10, 132, 255, 0.09), transparent 70%),
+      radial-gradient(40% 35% at 85% 90%, rgba(30, 144, 255, 0.05), transparent 70%);
+  }
+}
+
+/* ---------- Appearance: reduce glow ---------- */
+/* Most neon glow effects in the Bloopy app are applied via inline styles
+   (box-shadow / text-shadow / drop-shadow). Tone them down when enabled. */
+.reduce-glow [style*="box-shadow"] {
+  box-shadow: 0 4px 12px #00000066 !important;
+}
+.reduce-glow [style*="text-shadow"] {
+  text-shadow: none !important;
+}
+.reduce-glow [style*="drop-shadow"],
+.reduce-glow [style*="filter"] {
+  filter: none !important;
+}
+.reduce-glow .animate-ping {
+  display: none !important;
+}
+
+/* Floating bottom-nav clearance — keeps content (and chat input) above the
+   nav, including the device safe-area inset on notched phones. Centralized so
+   the compact layout can tighten it consistently (see below). */
+.bloopy-nav-pad {
+  padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+}
+
+/* ---------- Appearance: compact layout ---------- */
+/* Slightly tighten common spacing utilities across the protected app. */
+.compact-layout .px-5 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.compact-layout .px-4 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.compact-layout .pt-6 {
+  padding-top: 1rem;
+}
+.compact-layout .pt-5 {
+  padding-top: 0.75rem;
+}
+.compact-layout .bloopy-nav-pad {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+.compact-layout .p-5 {
+  padding: 1rem;
+}
+.compact-layout .mt-4 {
+  margin-top: 0.625rem;
+}
+.compact-layout .gap-3 {
+  gap: 0.5rem;
+}
+.compact-layout .py-4 {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+/* ============================================================
+   Theme-aware UI tokens — keep buttons, inputs, placeholders and
+   helper text on-theme instead of a hardcoded faded blue-gray.
+   These consume the CSS variables set by BloopyThemeProvider, so
+   every world theme controls them (Moon=silver, Volcano=amber, …).
+   ============================================================ */
+.bloopy-text { color: var(--bloopy-text); }
+.bloopy-text-soft { color: var(--bloopy-text-soft); }
+.bloopy-muted { color: var(--bloopy-muted); }
+.bloopy-muted-strong { color: var(--bloopy-muted-strong); }
+
+/* Theme-aware placeholder for inputs / textareas */
+.bloopy-placeholder::placeholder,
+.bloopy-input::placeholder {
+  color: var(--bloopy-placeholder);
+  opacity: 1; /* Firefox dims placeholders by default */
+}
+.bloopy-input { color: var(--bloopy-text); }
+
+/* Card / chip surfaces */
+.bloopy-card {
+  background: var(--bloopy-card);
+  border-color: var(--bloopy-card-border);
+  color: var(--bloopy-text);
+}
+.bloopy-card-soft { background: var(--bloopy-card-soft); border-color: var(--bloopy-card-border); }
+.bloopy-chip {
+  background: var(--bloopy-card-soft);
+  border-color: var(--bloopy-card-border);
+  color: var(--bloopy-text-soft);
+}
+
+/* Buttons */
+.bloopy-button-primary {
+  background: linear-gradient(180deg, var(--bloopy-button-hover), var(--bloopy-button));
+  border-color: var(--bloopy-button-hover);
+  color: var(--bloopy-text);
+}
+.bloopy-button-secondary {
+  background: var(--bloopy-card-soft);
+  border-color: var(--bloopy-card-border);
+  color: var(--bloopy-text);
+}
+
+/* Disabled buttons: a calm, theme-aware muted surface — never a blue-gray
+   fade. `!important` lets it override each button's inline background/glow
+   only while actually disabled; cursor-not-allowed applies only then. */
+.bloopy-btn:disabled,
+.bloopy-btn[aria-disabled="true"],
+.bloopy-button-disabled {
+  background: var(--bloopy-button-disabled) !important;
+  color: var(--bloopy-muted) !important;
+  border-color: var(--bloopy-card-border) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Bloopy microinteractions & reward feedback (decorative only)
+   Movement is removed under prefers-reduced-motion; glow/opacity
+   cues remain so feedback is still felt, never lost.
+   ============================================================ */
+
+/* Card shine sweep on hover / focus / press (needs a rounded, clipped card) */
+.bloopy-card::after,
+.bloopy-card-tap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.12) 50%, transparent 65%);
+  transform: translateX(-130%);
+  opacity: 0;
+}
+.bloopy-card:hover::after,
+.bloopy-card:focus-visible::after,
+.bloopy-card:active::after,
+.bloopy-card-tap:hover::after,
+.bloopy-card-tap:focus-visible::after,
+.bloopy-card-tap:active::after {
+  opacity: 1;
+  animation: bloopyShine 0.85s ease;
+}
+@keyframes bloopyShine {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(130%); }
+}
+
+/* Floating reward toast + sparkles */
+.bloopy-reward { animation: bloopyRewardFloat 1.5s ease forwards; }
+@keyframes bloopyRewardFloat {
+  0% { opacity: 0; transform: translate(-50%, 8px) scale(0.92); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, -14px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -30px) scale(1); }
+}
+.bloopy-sparkle { animation: bloopySparkleUp 1.2s ease forwards; }
+@keyframes bloopySparkleUp {
+  0% { opacity: 0; transform: scale(0.3); }
+  40% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5) translateY(-12px); }
+}
+
+/* Bloopy happy reaction bounce */
+.bloopy-celebrate { animation: bloopyCelebrate 0.75s ease; }
+@keyframes bloopyCelebrate {
+  0%, 100% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-10px) scale(1.06); }
+  55% { transform: translateY(0) scale(1); }
+  75% { transform: translateY(-4px) scale(1.03); }
+}
+
+/* Streak dot / number pop-in */
+.bloopy-pop { animation: bloopyPop 0.45s ease both; }
+@keyframes bloopyPop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Gentle flame pulse for the streak */
+.bloopy-flame { animation: bloopyFlame 2.6s ease-in-out infinite; }
+@keyframes bloopyFlame {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+/* Bottom-nav center breathing glow + active-item soft pulse */
+.bloopy-nav-breathe { animation: bloopyNavBreathe 3.6s ease-in-out infinite; }
+@keyframes bloopyNavBreathe {
+  0%, 100% { opacity: 0.32; transform: scale(0.9); }
+  50% { opacity: 0.58; transform: scale(1.1); }
+}
+.bloopy-nav-active { animation: bloopyNavActive 2.4s ease-in-out infinite; }
+@keyframes bloopyNavActive {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloopy-card::after { animation: none !important; opacity: 0 !important; }
+  .bloopy-celebrate,
+  .bloopy-pop,
+  .bloopy-sparkle,
+  .bloopy-flame,
+  .bloopy-nav-breathe,
+  .bloopy-nav-active { animation: none !important; }
+  .bloopy-reward { animation: bloopyRewardFade 1.5s ease forwards !important; }
+}
+@keyframes bloopyRewardFade {
+  0% { opacity: 0; transform: translateX(-50%); }
+  15% { opacity: 1; transform: translateX(-50%); }
+  80% { opacity: 1; transform: translateX(-50%); }
+  100% { opacity: 0; transform: translateX(-50%); }
+}
+
+/* ---------- Reward sparkle burst (no visible text) ---------- */
+.bloopy-burst-glow { animation: bloopyGlowBurst 0.6s ease forwards; }
+.bloopy-burst-ring { animation: bloopyRingPulse 0.6s ease forwards; }
+/* milestone-only: a wider, slightly slower outer ring (still under 1s) */
+.bloopy-burst-ring-wide { animation: bloopyRingPulse 0.9s ease forwards; }
+.bloopy-burst-particle { animation: bloopyBurst 0.65s ease forwards; }
+.bloopy-card-burst { animation: bloopyCardGlow 0.55s ease; }
+@keyframes bloopyGlowBurst {
+  0% { transform: scale(0.4); opacity: 0; }
+  35% { opacity: 0.7; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes bloopyRingPulse {
+  0% { transform: scale(0.4); opacity: 0.85; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+@keyframes bloopyBurst {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(var(--tx, 0), var(--ty, 0)) scale(0.5); opacity: 0; }
+}
+@keyframes bloopyCardGlow {
+  0%, 100% { filter: brightness(1); }
+  35% { filter: brightness(1.22); }
+}
+@keyframes bloopyFlash {
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  100% { opacity: 0; }
+}
+/* Reduced motion: a quick opacity/glow flash instead of moving particles. */
+@media (prefers-reduced-motion: reduce) {
+  .bloopy-burst-particle,
+  .bloopy-burst-glow,
+  .bloopy-burst-ring,
+  .bloopy-burst-ring-wide {
+    animation: bloopyFlash 0.5s ease forwards !important;
+    transform: none !important;
+  }
+}
+
+/* ============================================================
+   Task completion polish (Reminders). All theme colours come
+   from inline styles; these classes only drive motion/timing,
+   and every one degrades to a soft opacity/glow under
+   prefers-reduced-motion (no bouncing).
+   ============================================================ */
+/* checkbox gives a soft springy bounce when a task is completed */
+.bloopy-check-pop { animation: bloopyCheckPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes bloopyCheckPop {
+  0% { transform: scale(0.8); }
+  45% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+/* the check mark draws itself in */
+.bloopy-check-draw path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: bloopyCheckDraw 0.45s ease forwards; }
+@keyframes bloopyCheckDraw { to { stroke-dashoffset: 0; } }
+/* a completed card gives one brief, soft glow sweep (not a flash) */
+.bloopy-task-glow { animation: bloopyTaskGlow 0.7s ease; }
+@keyframes bloopyTaskGlow {
+  0%, 100% { filter: brightness(1); }
+  35% { filter: brightness(1.16); }
+}
+/* a newly added task slides + fades in softly */
+.bloopy-task-in { animation: bloopyTaskIn 0.4s ease both; }
+@keyframes bloopyTaskIn {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes bloopyTaskFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .bloopy-check-pop,
+  .bloopy-task-glow { animation: none !important; }
+  .bloopy-check-draw path { animation: none !important; stroke-dashoffset: 0 !important; }
+  /* keep the entrance, drop the movement */
+  .bloopy-task-in { animation: bloopyTaskFade 0.35s ease both !important; }
+}
+
+/* ============================================================
+   Global tap / press feedback — reusable, instant, non-blocking.
+   App-wide: any link/button gets a subtle brightness press (a glow
+   change, so it stays calm under reduced motion). Opt-in via the
+   .bloopy-app shell class. Focus rings are never touched.
+   ============================================================ */
+.bloopy-app a:active,
+.bloopy-app button:active {
+  filter: brightness(1.14);
+}
+
+/* Opt-in richer tap classes for important controls */
+.bloopy-tap {
+  transition: transform 130ms ease, filter 130ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.bloopy-press-glow {
+  transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+.bloopy-icon-tap {
+  display: inline-flex;
+  transition: transform 150ms ease;
+}
+.bloopy-sparkle-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bloopy-press-glow:active {
+  box-shadow: 0 0 0 1px currentColor, 0 0 14px currentColor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bloopy-tap:active {
+    transform: scale(0.97);
+  }
+  .bloopy-tap:active .bloopy-icon-tap,
+  .bloopy-icon-tap:active {
+    transform: translateY(-1px) scale(1.1);
+  }
+}
+/* Reduced motion: keep the brightness/glow press, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  .bloopy-tap:active {
+    filter: brightness(1.14);
+  }
+}
+
+/* ============================================================
+   App-wide interaction polish (global pass). Pairs with the
+   delegated <BloopyInteractionLayer /> sound/sparkle. These are
+   purely cosmetic press cues — no layout shift, movement removed
+   under reduced motion, and focus-visible rings are never touched.
+   ============================================================ */
+/* Opt-in richer press + hover for important controls. */
+.bloopy-interactive,
+.bloopy-pressable {
+  transition: transform 130ms ease, filter 150ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.bloopy-interactive:hover,
+.bloopy-pressable:hover {
+  filter: brightness(1.06);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bloopy-interactive:active,
+  .bloopy-pressable:active,
+  [data-bloopy-tap]:active {
+    transform: scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bloopy-interactive:active,
+  .bloopy-pressable:active,
+  [data-bloopy-tap]:active {
+    filter: brightness(1.14);
+  }
+}
+/* Disabled controls must never look or feel active. */
+.bloopy-app button:disabled,
+.bloopy-app [aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   Theme-aware scrollbars — never a bright white bar.
+   Applies app-wide inside the themed shell (and to any element
+   opting in with `.bloopy-scrollbar`). Track is transparent so it
+   blends with the page/card background; the thumb is a subtle dark
+   theme color that brightens to the accent on hover. Uses the CSS
+   variables set by BloopyThemeProvider, with safe dark fallbacks.
+   ============================================================ */
+.bloopy-app,
+.bloopy-app *,
+.bloopy-scrollbar {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--bloopy-card-border, #1b3a63) transparent;
+}
+
+/* WebKit / Chromium / Safari */
+.bloopy-app ::-webkit-scrollbar,
+.bloopy-app::-webkit-scrollbar,
+.bloopy-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.bloopy-app ::-webkit-scrollbar-track,
+.bloopy-app::-webkit-scrollbar-track,
+.bloopy-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bloopy-app ::-webkit-scrollbar-thumb,
+.bloopy-app::-webkit-scrollbar-thumb,
+.bloopy-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--bloopy-card-border, #1b3a63);
+  border-radius: 9999px;
+  /* padded thumb so it reads as a slim, rounded dark-glass pill */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.bloopy-app ::-webkit-scrollbar-thumb:hover,
+.bloopy-app::-webkit-scrollbar-thumb:hover,
+.bloopy-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--bloopy-accent, #0a84ff);
+  background-clip: padding-box;
+}
+/* keep the corner where two scrollbars meet from flashing white */
+.bloopy-app ::-webkit-scrollbar-corner,
+.bloopy-app::-webkit-scrollbar-corner,
+.bloopy-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ------------------------------------------------------------
+   Chat message list — dedicated, theme-aware scrollbar applied
+   directly to the scrolling container (.bloopy-chat-scrollbar on
+   the messages div). Covers both the modern standard properties
+   (Firefox + recent Chromium, which ignore ::-webkit-scrollbar
+   once scrollbar-width is set) and the WebKit pseudo-elements
+   (Safari / older Chromium), so the bar is never white anywhere.
+   ------------------------------------------------------------ */
+.bloopy-chat-scrollbar {
+  background: transparent; /* no white/light backing behind the bar */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--bloopy-accent, #0a84ff) 45%, var(--bloopy-card-border, #1b3a63) 55%) transparent;
+}
+.bloopy-chat-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+.bloopy-chat-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.bloopy-chat-scrollbar::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--bloopy-muted, #7f91b8) 35%, var(--bloopy-card-border, #1b3a63) 65%);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+.bloopy-chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--bloopy-accent, #0a84ff) 70%, var(--bloopy-card-border, #1b3a63) 30%);
+  background-clip: padding-box;
+}
+.bloopy-chat-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
